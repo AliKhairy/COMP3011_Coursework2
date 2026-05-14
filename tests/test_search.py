@@ -7,11 +7,12 @@ class TestSearchEngine:
     def setup_engine(self):
         """
         Creates a real Indexer and SearchEngine for an INTEGRATION TEST.
-        Injects a controlled, pre-calculated dictionary into the index.
         """
         indexer = InvertedIndex()
         
-        # Manually constructing the index to simulate a post-crawl state
+        # We MUST mock the total_urls now, otherwise the TF-IDF math divides by zero
+        indexer.total_urls = {"http://site.com/1", "http://site.com/2", "http://site.com/3", "http://site.com/4"}
+        
         indexer.index = {
             "good": {
                 "http://site.com/1": {"frequency": 1, "positions": [0]},
@@ -28,28 +29,25 @@ class TestSearchEngine:
         
         return SearchEngine(indexer)
 
-    def test_find_boolean_and_logic(self, setup_engine):
+    def test_find_boolean_and_logic_with_scoring(self, setup_engine):
         """
-        Proves that multi-word queries only return URLs containing ALL words.
-        'good' and 'friends' only intersect at http://site.com/2.
+        Proves multi-word queries return the correct URL and calculate a score.
         """
-        results = setup_engine.find_pages("Good Friends") # Note the uppercase to test tokenization too!
+        results = setup_engine.find_pages("Good Friends") 
         
         assert len(results) == 1
-        assert "http://site.com/2" in results
+        
+        # Unpack the tuple: results[0] looks like ('http://site.com/2', 10.301)
+        returned_url = results[0][0]
+        returned_score = results[0][1]
+        
+        assert returned_url == "http://site.com/2"
+        assert returned_score > 0.0 # Proves the math executed successfully
 
     def test_find_missing_word_fails_gracefully(self, setup_engine):
-        """
-        Proves the edge case where one word exists, but the other does not.
-        A strict Boolean AND must return nothing.
-        """
         results = setup_engine.find_pages("good aliens")
-        
         assert results == []
         
     def test_find_empty_query(self, setup_engine):
-        """
-        Proves edge case of an empty query string.
-        """
         results = setup_engine.find_pages("   ")
         assert results == []
