@@ -1,0 +1,33 @@
+name: Search Engine Test Pipeline
+
+# This tells GitHub to run these tests every time you push to the 'main' branch, 
+# or whenever you open a Pull Request against the 'main' branch.
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # This is the virtual server GitHub provides
+
+    steps:
+    - name: Check out the repository code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      # We need requests, beautifulsoup4, and pytest to run the tests
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov requests beautifulsoup4
+
+    - name: Run Test Suite with Coverage
+      # This runs pytest and tells it to calculate what percentage of our src/ code is tested
+      run: |
+        pytest tests/ --cov=src/ --cov-report=term-missing
