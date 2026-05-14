@@ -30,4 +30,4 @@ jobs:
     - name: Run Test Suite with Coverage
       # This runs pytest and tells it to calculate what percentage of our src/ code is tested
       run: |
-        pytest tests/ --cov=src/ --cov-report=term-missing
+        python -m pytest tests/ --cov=src/ --cov-report=term-missing
