@@ -51,3 +51,35 @@ class TestSearchEngine:
     def test_find_empty_query(self, setup_engine):
         results = setup_engine.find_pages("   ")
         assert results == []
+    
+    def test_print_word_stats_valid_word(self, setup_engine, capsys):
+        """
+        Proves the print command correctly fetches and formats the index data.
+        """
+        setup_engine.print_word_stats("good")
+        
+        # Intercept the terminal output
+        captured = capsys.readouterr()
+        
+        # Assert the correct headers and data are in the console output
+        assert "Index data for 'good':" in captured.out
+        assert "http://site.com/1" in captured.out
+        assert "frequency" in captured.out
+
+    def test_print_word_stats_invalid_word(self, setup_engine, capsys):
+        """
+        Proves the print command handles missing words gracefully without crashing.
+        """
+        setup_engine.print_word_stats("aliens")
+        
+        captured = capsys.readouterr()
+        assert "The word 'aliens' was not found in the index." in captured.out
+
+    def test_print_word_stats_empty_query(self, setup_engine, capsys):
+        """
+        Proves the print command handles empty or punctuation-only queries.
+        """
+        setup_engine.print_word_stats("   !!!   ")
+        
+        captured = capsys.readouterr()
+        assert "Invalid search term." in captured.out
