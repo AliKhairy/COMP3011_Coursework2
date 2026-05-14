@@ -59,7 +59,7 @@ class SearchShell(cmd.Cmd):
 
     def do_find(self, arg):
         """
-        Finds a given query phrase and returns a list of pages containing it.
+        Finds a given query phrase and returns ranked pages.
         Usage: find <word(s)>
         """
         if not arg:
@@ -70,9 +70,10 @@ class SearchShell(cmd.Cmd):
         
         if results:
             print(f"\nFound {len(results)} pages matching '{arg}':")
-            for i, url in enumerate(results, 1):
-                print(f"{i}. {url}")
-            print() # Blank line for readability
+            # Unpack the tuple to display the algorithmic score
+            for i, (url, score) in enumerate(results, 1):
+                print(f"{i}. [Score: {score:.4f}] {url}")
+            print() 
         else:
             print(f"\nNo pages found matching '{arg}'.\n")
 
