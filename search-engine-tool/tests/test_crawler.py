@@ -53,3 +53,27 @@ class TestQuoteCrawler:
         # Prove we respected the politeness window without actually waiting!
         assert mock_sleep.call_count == 2
         mock_sleep.assert_called_with(6)
+
+    @patch('src.crawler.time.sleep')
+    @patch('src.crawler.requests.Session.get')
+    def test_crawl_handles_network_exception(self, mock_get, mock_sleep, crawler):
+        """
+        Tests the 'Disaster Path': simulates a total network failure to ensure 
+        the crawler catches the error gracefully and doesn't crash the whole app.
+        """
+        # Force the mock to throw a fatal network error the moment it is called
+        mock_get.side_effect = requests.RequestException("Simulated Server Timeout!")
+
+        # Execute the function. 
+        # If the crawler doesn't have a try/except block, the test will crash right here.
+        result = crawler.crawl()
+
+        # Assertions
+        # 1. It should safely return an empty list because it failed on the very first page
+        assert result == []
+        
+        # 2. It should have attempted to make the request exactly once before failing
+        assert mock_get.call_count == 1
+        
+        # 3. It STILL must respect the politeness window before making that doomed request
+        assert mock_sleep.call_count == 1    
