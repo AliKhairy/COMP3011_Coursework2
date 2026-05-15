@@ -10,14 +10,15 @@ class TestInvertedIndex:
 
     def test_tokenize_cleans_text_properly(self, indexer):
         """
-        Proves the indexer handles case insensitivity and strips punctuation.
-        This is a critical edge case for web text.
+        Proves the indexer handles case insensitivity, strips punctuation, 
+        AND correctly removes stop-words.
         """
         raw_text = "Hello!!   This is a TEST, a messy test... \n \t right?"
-        expected_tokens = ["hello", "this", "is", "a", "test", "a", "messy", "test", "right"]
+        
+        # 'this', 'is', and 'a' should be gone now!
+        expected_tokens = ["hello", "test", "messy", "test", "right"] 
         
         actual_tokens = indexer._tokenize(raw_text)
-        
         assert actual_tokens == expected_tokens
 
     def test_add_document_stores_statistics(self, indexer):
@@ -44,29 +45,19 @@ class TestInvertedIndex:
     def test_save_and_load_file_io(self, indexer, tmp_path):
         """
         Proves the indexer can serialize its data to JSON and save it to the OS.
-        Uses pytest's tmp_path fixture to avoid creating real files.
         """
-        # 1. Setup: Add some dummy data to the index
-        indexer.add_document("http://io-test.com", "save me")
-        
-        # 2. Create a temporary, isolated file path
+        # Changed "save me" to "save data" because "me" is a stop word!
+        indexer.add_document("http://io-test.com", "save data") 
         test_file = tmp_path / "test_data" / "test_index.json"
         
-        # 3. Execute the save
         indexer.save_to_file(str(test_file))
-        
-        # 4. Assert the file actually generated on the (temporary) hard drive
         assert test_file.exists()
         
-        # 5. Create a completely blank, secondary indexer
         new_indexer = InvertedIndex()
-        
-        # 6. Load the temporary file into the new indexer
         new_indexer.load_from_file(str(test_file))
         
-        # 7. Assert the data survived the round trip!
         assert "save" in new_indexer.index
-        assert "me" in new_indexer.index
+        assert "data" in new_indexer.index # Updated assertion
         assert len(new_indexer.total_urls) == 1
 
     def test_load_file_not_found_graceful_fail(self, indexer, capsys):
