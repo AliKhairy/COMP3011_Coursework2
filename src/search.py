@@ -40,8 +40,6 @@ class SearchEngine:
             return word[:-3]
         if word.endswith('ed'):
             return word[:-2]
-        if word.endswith('es'):
-            return word[:-2]
         if word.endswith('s') and not word.endswith('ss'):
             return word[:-1]
         return word

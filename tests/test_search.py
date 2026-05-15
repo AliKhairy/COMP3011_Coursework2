@@ -98,3 +98,28 @@ class TestSearchEngine:
         
         # Edge case: Words 3 letters or shorter should be ignored
         assert setup_engine._stem("is") == "is"
+    
+    def test_exact_match_scoring_bonus(self, setup_engine):
+        """
+        Proves that exact literal matches receive a +5.0 mathematical bonus
+        over pages that only contain a stemmed variant.
+        """
+        # 1. Inject specific dummy data to create a competition
+        setup_engine.indexer.index["quotes"] = {"http://exact.com": {"frequency": 1, "positions": [0]}}
+        setup_engine.indexer.index["quote"] = {"http://stemmed.com": {"frequency": 1, "positions": [0]}}
+        setup_engine.indexer.total_urls = {"http://exact.com", "http://stemmed.com", "http://dummy.com"}
+
+        # 2. Search for the exact literal word
+        results = setup_engine.find_pages("quotes")
+        
+        # 3. Stem expansion means BOTH URLs should be returned
+        assert len(results) == 2
+        
+        # 4. Unpack the sorted results
+        top_url, top_score = results[0]
+        bottom_url, bottom_score = results[1]
+        
+        # 5. The Exact Match MUST win the #1 spot because of the +5.0 bonus
+        assert top_url == "http://exact.com"
+        assert top_score > bottom_score
+        assert top_score >= 5.0 # Proving the math was actually applied
