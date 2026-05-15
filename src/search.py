@@ -32,21 +32,30 @@ class SearchEngine:
     def _stem(self, word: str) -> str:
         """
         A custom algorithm to strip common English suffixes.
-        Handles double-consonant grammar edge cases.
+        Includes semantic exception guards to prevent destructive stemming.
         """
         if len(word) <= 3:
             return word
             
         stem = word
-        if word.endswith('ing'):
-            stem = word[:-3]
+        
+        # Exception guard for 'eed' words (feed, bleed, need)
+        if word.endswith('eed'):
+            stem = word
         elif word.endswith('ed'):
             stem = word[:-2]
-        elif word.endswith('s') and not word.endswith('ss'):
-            return word[:-1] # Return early for plurals
             
-        # The Double Consonant Fix (e.g., runn -> run, mapp -> map)
-        # We ignore 'l', 's', and 'z' because words like 'roll' or 'boss' are naturally double
+        # Exception guard for short 'ing' words and specific nouns (ring, wing, string)
+        elif word.endswith('ing'):
+            if len(word) <= 4 or word in ["thing", "bring", "swing", "spring", "string"]:
+                stem = word
+            else:
+                stem = word[:-3]
+                
+        elif word.endswith('s') and not word.endswith('ss'):
+            return word[:-1] 
+            
+        # The Double Consonant Fix (e.g., runn -> run)
         if len(stem) >= 2 and stem[-1] == stem[-2] and stem[-1] not in "lsz":
             stem = stem[:-1]
             
