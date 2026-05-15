@@ -83,3 +83,18 @@ class TestSearchEngine:
         
         captured = capsys.readouterr()
         assert "Invalid search term." in captured.out
+    
+    def test_custom_stemmer_logic(self, setup_engine):
+        """
+        Proves the custom NLP stemmer correctly strips English suffixes 
+        while preserving root words and handling edge cases.
+        """
+        assert setup_engine._stem("quotes") == "quote"
+        assert setup_engine._stem("running") == "run"
+        assert setup_engine._stem("played") == "play"
+        
+        # Edge case: Should not strip the 's' off words that naturally end in 'ss'
+        assert setup_engine._stem("boss") == "boss"
+        
+        # Edge case: Words 3 letters or shorter should be ignored
+        assert setup_engine._stem("is") == "is"
