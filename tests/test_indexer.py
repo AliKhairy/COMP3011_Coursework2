@@ -70,3 +70,23 @@ class TestInvertedIndex:
         # Capture the terminal output to prove it printed an error instead of crashing
         captured = capsys.readouterr()
         assert "Error: Could not find index file" in captured.out
+    
+    def test_all_stopwords_document(self, indexer):
+        """
+        Proves that a document containing ONLY stop words doesn't pollute the index.
+        """
+        indexer.add_document("http://stop.com", "I am the and it is")
+        
+        # The index should be completely empty, but the URL should be tracked
+        assert len(indexer.index) == 0
+        assert "http://stop.com" in indexer.total_urls
+
+    def test_idempotency_prevents_duplicates(self, indexer):
+        """
+        Proves that crawling the exact same URL twice doesn't duplicate stats.
+        """
+        indexer.add_document("http://duplicate.com", "unique data")
+        indexer.add_document("http://duplicate.com", "unique data") # Attempt to duplicate
+        
+        # Frequency must remain exactly 1
+        assert indexer.index["unique"]["http://duplicate.com"]["frequency"] == 1

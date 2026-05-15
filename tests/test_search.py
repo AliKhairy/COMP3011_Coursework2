@@ -123,3 +123,27 @@ class TestSearchEngine:
         assert top_url == "http://exact.com"
         assert top_score > bottom_score
         assert top_score >= 5.0 # Proving the math was actually applied
+
+    def test_stemmer_destruction_guards(self, setup_engine):
+        """
+        Proves our specific exception guards prevent standard words from mangling.
+        """
+        assert setup_engine._stem("feed") == "feed"     # Protects 'eed'
+        assert setup_engine._stem("ring") == "ring"     # Protects short 'ing'
+        assert setup_engine._stem("running") == "run"   # Double-consonant fix works
+
+    def test_zero_score_tfidf(self, setup_engine):
+        """
+        Proves that if a word is in EVERY document, its base TF-IDF score is mathematically 0.0.
+        """
+        # Inject the word 'omnipresent' into every single URL in the fake index
+        setup_engine.indexer.index["omnipresent"] = {}
+        for url in setup_engine.indexer.total_urls:
+            setup_engine.indexer.index["omnipresent"][url] = {"frequency": 1, "positions": [0]}
+            
+        results = setup_engine.find_pages("omnipresent")
+        
+        # The math: Because df == total_docs, log10(1) = 0. 
+        # The only score they should get is the +5.0 exact match bonus.
+        for url, score in results:
+            assert score == 5.0
