@@ -70,12 +70,20 @@ class SearchShell(cmd.Cmd):
         
         if results:
             print(f"\nFound {len(results)} pages matching '{arg}':")
-            # Unpack the tuple to display the algorithmic score
             for i, (url, score) in enumerate(results, 1):
                 print(f"{i}. [Score: {score:.4f}] {url}")
             print() 
         else:
-            print(f"\nNo pages found matching '{arg}'.\n")
+            print(f"\nNo pages found matching '{arg}'.")
+            
+            # THE NEW QUERY SUGGESTION LOGIC
+            # We check the first word the user typed to see if it was a typo
+            clean_words = self.indexer._tokenize(arg)
+            if clean_words:
+                suggestion = self.search.get_suggestion(clean_words[0])
+                if suggestion:
+                    print(f"Did you mean: '{suggestion}'?")
+            print()
 
     def do_quit(self, arg):
         """Exits the search tool."""
