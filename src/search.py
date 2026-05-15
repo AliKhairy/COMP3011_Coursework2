@@ -32,17 +32,25 @@ class SearchEngine:
     def _stem(self, word: str) -> str:
         """
         A custom algorithm to strip common English suffixes.
-        Reduces vocabulary mismatch (e.g., 'quotes' -> 'quote').
+        Handles double-consonant grammar edge cases.
         """
         if len(word) <= 3:
             return word
+            
+        stem = word
         if word.endswith('ing'):
-            return word[:-3]
-        if word.endswith('ed'):
-            return word[:-2]
-        if word.endswith('s') and not word.endswith('ss'):
-            return word[:-1]
-        return word
+            stem = word[:-3]
+        elif word.endswith('ed'):
+            stem = word[:-2]
+        elif word.endswith('s') and not word.endswith('ss'):
+            return word[:-1] # Return early for plurals
+            
+        # The Double Consonant Fix (e.g., runn -> run, mapp -> map)
+        # We ignore 'l', 's', and 'z' because words like 'roll' or 'boss' are naturally double
+        if len(stem) >= 2 and stem[-1] == stem[-2] and stem[-1] not in "lsz":
+            stem = stem[:-1]
+            
+        return stem
 
     def get_suggestion(self, typo: str) -> Optional[str]:
         """Scans the index to find the closest matching word."""
