@@ -62,19 +62,32 @@ class SearchEngine:
         return stem
 
     def get_suggestion(self, typo: str) -> Optional[str]:
-        """Scans the index to find the closest matching word."""
+        """Scans the index to find the closest matching word using frequency tie-breaking."""
         best_match = None
         min_distance = float('inf')
         max_acceptable_distance = 2 
+        best_frequency = 0 # Tracks word popularity for tie-breakers
         
         for valid_word in self.indexer.index.keys():
             if abs(len(valid_word) - len(typo)) > max_acceptable_distance:
                 continue
-            dist = self._levenshtein_distance(typo, valid_word)
-            if dist < min_distance and dist <= max_acceptable_distance:
-                min_distance = dist
-                best_match = valid_word
                 
+            dist = self._levenshtein_distance(typo, valid_word)
+            
+            if dist <= max_acceptable_distance:
+                # Calculate how many pages this word appears on
+                word_frequency = len(self.indexer.index[valid_word])
+                
+                if dist < min_distance:
+                    min_distance = dist
+                    best_match = valid_word
+                    best_frequency = word_frequency
+                    
+                # THE TIE BREAKER: If distances are equal, the more popular word wins!
+                elif dist == min_distance and word_frequency > best_frequency:
+                    best_match = valid_word
+                    best_frequency = word_frequency
+                    
         return best_match
 
     def print_word_stats(self, word: str):

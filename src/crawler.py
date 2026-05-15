@@ -35,18 +35,19 @@ class QuoteCrawler:
             soup = BeautifulSoup(response.text, 'html.parser')
             quotes_on_page = soup.find_all('div', class_='quote')
 
-            for q in quotes_on_page:
-                # 2. MALFORMED HTML GUARD: Gracefully skip if the text span is missing
+            # UPDATE 1: Add enumerate(..., 1) to count the quotes
+            for i, q in enumerate(quotes_on_page, 1):
                 text_el = q.find('span', class_='text')
                 if not text_el:
                     continue 
                 
                 quote_text = text_el.get_text()
                 all_quotes.append({
-                    "url": url_to_crawl,
+                    # UPDATE 2: Append the unique anchor tag to the URL
+                    "url": f"{url_to_crawl}#quote-{i}",
                     "text": quote_text
                 })
-
+            
             # 3. SAFE PAGINATION: Check if the button, the anchor, AND the href exist
             next_btn = soup.find('li', class_='next')
             if next_btn and next_btn.find('a') and next_btn.find('a').get('href'):
